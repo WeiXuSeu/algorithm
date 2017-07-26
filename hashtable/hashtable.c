@@ -21,6 +21,8 @@
 ***************************************************/
 
 #define MinHashTableSize (3)
+const float LoadFactor = 1.5;
+const float RehashFactor = 2.0;
 
 struct ListNode
 {
@@ -32,6 +34,8 @@ typedef Position List;
 
 struct HashTbl
 {
+	float Load;
+	int ElementNum;
 	int TableSize;
 	List *TheLists;
 };
@@ -58,6 +62,7 @@ Index Hash(ElementType Key, int TableSize)
 
 HashTable InitializeTable(int TableSize)
 {
+	//List with head
 	HashTable H;
 	int i;
 
@@ -71,6 +76,8 @@ HashTable InitializeTable(int TableSize)
 	if(NULL==H)
 		FatalError("Out of space!");
 	H->TableSize = NextPrime(TableSize);
+	H->Load = 0.0;
+	H->ElementNum=0;
 	H->TheLists = malloc(sizeof(List)*H->TableSize);
 	if(NULL==H->TheLists)
 		FatalError("Out of space");
@@ -96,8 +103,9 @@ Position Find(ElementType Key, HashTable H)
 	return P;
 }
 
-void Insert(ElementType Key, HashTable H)
+void InsertCore(ElementType Key, HashTable H)
 {
+
 	Position P = Find(Key, H);
 	Position NewCell=NULL;
 	List L = H->TheLists[Hash(Key, H->TableSize)];
@@ -111,9 +119,45 @@ void Insert(ElementType Key, HashTable H)
 			NewCell->Element = Key;
 			NewCell->Next = L->Next;
 			L->Next = NewCell;
+			H->ElementNum++;
+			H->Load=(float)H->ElementNum/H->TableSize;
 		}
 	}
 }
+
+void RehashTable(HashTable H, HashTable *pHashTable)
+{
+	int TableSize = H->TableSize*RehashFactor;
+	HashTable pRehashTable = InitializeTable(TableSize);
+	int ListIndex=0;
+	Position ElementPosition = NULL;
+	for(;ListIndex<H->TableSize;ListIndex++)
+	{
+		ElementPosition = H->TheLists[ListIndex]->Next;
+		while(NULL != ElementPosition)
+		{
+			InsertCore(ElementPosition->Element, pRehashTable);
+			ElementPosition = ElementPosition->Next;
+		}
+	}
+	DestroyTable(H);
+	*pHashTable = pRehashTable;
+}
+
+void Insert(ElementType Key, HashTable H, HashTable *pHashTable)
+{
+	int ElemnetNum = H->ElementNum+1;
+	float Load = (float)ElemnetNum/H->TableSize;
+	if(Load <= LoadFactor)
+		InsertCore(Key, H);
+	else
+	{
+		RehashTable(H, pHashTable);
+		InsertCore(Key, *pHashTable);
+	}
+}
+
+
 
 int IsLast(Position P)
 {
@@ -137,6 +181,8 @@ void Delete(ElementType Key, HashTable H)
 		Position tmp = PreviousPosition->Next;
 		PreviousPosition->Next=tmp->Next;
 		free(tmp);
+		H->ElementNum--;
+		H->Load=(float)H->ElementNum/H->TableSize;
 	}
 }
 
@@ -180,11 +226,14 @@ void DumpHashTable(HashTable H)
 int main()
 {
 	HashTable hashtable = InitializeTable(4);
+	HashTable *pHashTable = &hashtable;
 	int index=0;
-	for(;index < 10; index++)
-		Insert(index, hashtable);
-	DumpHashTable(hashtable);
-	Delete(6,hashtable);
-	DumpHashTable(hashtable);
+	for(;index < 50; index++)
+	{
+		Insert(index, hashtable, pHashTable);
+		DumpHashTable(*pHashTable);
+	}
+	Delete(6,*pHashTable);
+	DumpHashTable(*pHashTable);
 	return 0;
 }

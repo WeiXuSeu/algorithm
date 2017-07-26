@@ -12,7 +12,7 @@ typedef struct HashTbl *HashTable;
 HashTable InitializeTable(int TableSize);
 void DestroyTable(HashTable HTable);
 Position Find(ElementType Key, HashTable HTable);
-void Insert(ElementType Key, HashTable HTable);
+void Insert(ElementType Key, HashTable HTable, HashTable *pHashTable);
 ElementType Retrieve(Position P);
 
 #endif
