@@ -48,6 +48,7 @@ public:
     }
     
     /*
+	point: subtree match, must reach leaf
     assume the result is true;
     any false condition is an end point;
     another end condition is reaching the leaf (near NULL)
