@@ -26,8 +26,17 @@ for(int i = 1; i < len; i++)
 
 //i --> value(arr[i]) --> index:count(--count[arr[i]-min])-->right position
 //xth largest value put at position (x-1)
-for(int i = 0; i < n; i++)
-	target[--count[arr[i]-min]] = arr[i];
-
+//do a count sort
+/*
+count[], 记录后从后往前排，对于某个相同的数
+所以，数组扫描时也要从后往前扫描，保证排序的稳定性；
+如5有3个，从count[5]-->count[5]-2排，所以从后扫描，算法稳定，后面的放在后面
+*/
+for(int i = n-1; i >= 0; i--)
+{
+	int position = --count[arr[i]-min];
+	target[position] = arr[i];
+}
+	
 return target;
 }
